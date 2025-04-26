@@ -32,3 +32,16 @@
         last-battle-block: uint
     }
 )
+
+;; Keep track of ownership counts
+(define-map user-character-count principal uint)
+
+;; Market listings
+(define-map market
+    uint  ;; character ID
+    {
+        price: uint,
+        seller: principal
+    }
+)
+
