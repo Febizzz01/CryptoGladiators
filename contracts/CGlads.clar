@@ -81,3 +81,45 @@
         (<= (len name) u24)
     )
 )
+
+;; Helper function to generate pseudo-random number between 1 and 10
+(define-private (generate-stat (seed uint))
+    (let
+        (
+            (hash (sha256 block-height))
+        )
+        (+ (mod (len hash) u10) u1)
+    )
+)
+
+;; Public functions
+(define-public (mint-character (name (string-ascii 24)))
+    (let
+        (
+            (new-id (+ (var-get last-character-id) u1))
+            (caller tx-sender)
+            (current-count (get-owner-count caller))
+        )
+        ;; Input validation
+        (asserts! (is-valid-name name) ERR_INVALID_INPUT)
+        (asserts! (< current-count MAX_CHARACTERS_PER_USER) ERR_INVALID_INPUT)
+
+        (try! (stx-transfer? MINT_PRICE caller CONTRACT_OWNER))
+
+        ;; Create character with random initial stats using block height as seed
+        (map-set characters new-id {
+            owner: caller,
+            name: name,
+            level: u1,
+            xp: u0,
+            attack: (generate-stat new-id),
+            defense: (generate-stat (+ new-id u1)),
+            last-battle-block: u0
+        })
+
+        ;; Update ownership count
+        (map-set user-character-count caller (+ current-count u1))
+        (var-set last-character-id new-id)
+        (ok new-id)
+    )
+)
