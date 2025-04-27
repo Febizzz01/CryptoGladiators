@@ -178,3 +178,18 @@
         )
     )
 )
+
+(define-public (battle (attacker-id uint) (defender-id uint))
+    (begin
+        ;; Input validation
+        (asserts! (is-valid-character-id attacker-id) ERR_INVALID_INPUT)
+        (asserts! (is-valid-character-id defender-id) ERR_INVALID_INPUT)
+        (asserts! (not (is-eq attacker-id defender-id)) ERR_INVALID_INPUT)
+
+        (let
+            (
+                (attacker (unwrap! (get-character attacker-id) ERR_NOT_FOUND))
+                (defender (unwrap! (get-character defender-id) ERR_NOT_FOUND))
+                (current-block block-height)
+                (owner (try! (get-owner attacker-id)))
+            )
