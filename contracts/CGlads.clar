@@ -178,3 +178,70 @@
         )
     )
 )
+
+(define-public (battle (attacker-id uint) (defender-id uint))
+    (begin
+        ;; Input validation
+        (asserts! (is-valid-character-id attacker-id) ERR_INVALID_INPUT)
+        (asserts! (is-valid-character-id defender-id) ERR_INVALID_INPUT)
+        (asserts! (not (is-eq attacker-id defender-id)) ERR_INVALID_INPUT)
+
+        (let
+            (
+                (attacker (unwrap! (get-character attacker-id) ERR_NOT_FOUND))
+                (defender (unwrap! (get-character defender-id) ERR_NOT_FOUND))
+                (current-block block-height)
+                (owner (try! (get-owner attacker-id)))
+            )
+
+ ;; Verify ownership and cooldown
+            (asserts! (is-eq owner tx-sender) ERR_UNAUTHORIZED)
+            (asserts! (> current-block (+ (get last-battle-block attacker) u10)) ERR_COOLDOWN)
+
+            (let
+                (
+                    (attack-power (+ (get attack attacker) (get level attacker)))
+                    (defense-power (+ (get defense defender) (get level defender)))
+                    (attacker-wins (> attack-power defense-power))
+                )
+                ;; Award XP and potentially level up
+                (if attacker-wins
+                    (try! (add-xp attacker-id u50))
+                    (try! (add-xp defender-id u25))
+                )
+
+                ;; Update last battle time
+                (map-set characters attacker-id 
+                    (merge attacker { last-battle-block: current-block }))
+
+                (ok attacker-wins)
+            )
+        )
+    )
+)
+
+(define-private (add-xp (character-id uint) (xp-amount uint))
+    (let
+        (
+            (character (unwrap! (get-character character-id) ERR_NOT_FOUND))
+            (current-xp (get xp character))
+            (current-level (get level character))
+            (new-xp (+ current-xp xp-amount))
+            (xp-required (* BASE_XP_REQUIRED current-level))
+        )
+        (if (and (>= new-xp xp-required) (< current-level MAX_LEVEL))
+            (map-set characters character-id
+                (merge character {
+                    level: (+ current-level u1),
+                    xp: u0,
+                    attack: (+ (get attack character) u1),
+                    defense: (+ (get defense character) u1)
+                }))
+            (map-set characters character-id
+                (merge character {
+                    xp: new-xp
+                }))
+        )
+        (ok true)
+    )
+)
