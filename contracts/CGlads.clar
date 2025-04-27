@@ -32,3 +32,28 @@
         last-battle-block: uint
     }
 )
+
+;; Keep track of ownership counts
+(define-map user-character-count principal uint)
+
+;; Market listings
+(define-map market
+    uint  ;; character ID
+    {
+        price: uint,
+        seller: principal
+    }
+)
+
+;; Read-only functions
+(define-read-only (get-character (character-id uint))
+    (map-get? characters character-id)
+)
+
+(define-read-only (get-listing (character-id uint))
+    (map-get? market character-id)
+)
+
+(define-read-only (get-owner-count (user principal))
+    (default-to u0 (map-get? user-character-count user))
+)
