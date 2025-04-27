@@ -220,4 +220,28 @@
     )
 )
 
-
+(define-private (add-xp (character-id uint) (xp-amount uint))
+    (let
+        (
+            (character (unwrap! (get-character character-id) ERR_NOT_FOUND))
+            (current-xp (get xp character))
+            (current-level (get level character))
+            (new-xp (+ current-xp xp-amount))
+            (xp-required (* BASE_XP_REQUIRED current-level))
+        )
+        (if (and (>= new-xp xp-required) (< current-level MAX_LEVEL))
+            (map-set characters character-id
+                (merge character {
+                    level: (+ current-level u1),
+                    xp: u0,
+                    attack: (+ (get attack character) u1),
+                    defense: (+ (get defense character) u1)
+                }))
+            (map-set characters character-id
+                (merge character {
+                    xp: new-xp
+                }))
+        )
+        (ok true)
+    )
+)
