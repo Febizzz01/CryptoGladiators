@@ -57,3 +57,27 @@
 (define-read-only (get-owner-count (user principal))
     (default-to u0 (map-get? user-character-count user))
 )
+
+;; Helper function to get owner of a character
+(define-read-only (get-owner (character-id uint))
+    (match (get-character character-id)
+        character (ok (get owner character))
+        ERR_NOT_FOUND
+    )
+)
+
+;; Input validation functions
+(define-private (is-valid-character-id (character-id uint))
+    (<= character-id (var-get last-character-id))
+)
+
+(define-private (is-valid-price (price uint))
+    (>= price MIN_PRICE)
+)
+
+(define-private (is-valid-name (name (string-ascii 24)))
+    (and 
+        (> (len name) u0)
+        (<= (len name) u24)
+    )
+)
