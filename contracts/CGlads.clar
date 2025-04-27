@@ -193,3 +193,29 @@
                 (current-block block-height)
                 (owner (try! (get-owner attacker-id)))
             )
+
+ ;; Verify ownership and cooldown
+            (asserts! (is-eq owner tx-sender) ERR_UNAUTHORIZED)
+            (asserts! (> current-block (+ (get last-battle-block attacker) u10)) ERR_COOLDOWN)
+
+            (let
+                (
+                    (attack-power (+ (get attack attacker) (get level attacker)))
+                    (defense-power (+ (get defense defender) (get level defender)))
+                    (attacker-wins (> attack-power defense-power))
+                )
+                ;; Award XP and potentially level up
+                (if attacker-wins
+                    (try! (add-xp attacker-id u50))
+                    (try! (add-xp defender-id u25))
+                )
+
+                ;; Update last battle time
+                (map-set characters attacker-id 
+                    (merge attacker { last-battle-block: current-block }))
+
+                (ok attacker-wins)
+            )
+        )
+    )
+)
